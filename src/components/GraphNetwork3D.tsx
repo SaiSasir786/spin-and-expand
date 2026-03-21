@@ -253,16 +253,14 @@ function FieldSphere({ field, tableColor, tableGlow }: { field: FieldNode; table
 }
 
 function LocalEdge({ to, color }: { to: [number, number, number]; color: string }) {
-  const geo = useMemo(() => {
+  const lineObj = useMemo(() => {
     const points = [new THREE.Vector3(0, 0, 0), new THREE.Vector3(...to)];
-    return new THREE.BufferGeometry().setFromPoints(points);
-  }, [to]);
+    const geo = new THREE.BufferGeometry().setFromPoints(points);
+    const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.25 });
+    return new THREE.Line(geo, mat);
+  }, [to, color]);
 
-  return (
-    <line geometry={geo}>
-      <lineBasicMaterial color={color} transparent opacity={0.25} />
-    </line>
-  );
+  return <primitive object={lineObj} />;
 }
 
 // Global FK connection lines between tables
