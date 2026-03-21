@@ -382,6 +382,102 @@ function GridPlane() {
   );
 }
 
+function NeuralCore() {
+  const coreRef = useRef<THREE.Mesh>(null);
+  const ringRef1 = useRef<THREE.Mesh>(null);
+  const ringRef2 = useRef<THREE.Mesh>(null);
+  const ringRef3 = useRef<THREE.Mesh>(null);
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    if (coreRef.current) {
+      const pulse = 1 + Math.sin(t * 2) * 0.08;
+      coreRef.current.scale.setScalar(pulse);
+    }
+    if (ringRef1.current) ringRef1.current.rotation.set(t * 0.5, t * 0.3, 0);
+    if (ringRef2.current) ringRef2.current.rotation.set(0, t * 0.4, t * 0.6);
+    if (ringRef3.current) ringRef3.current.rotation.set(t * 0.2, 0, t * 0.5);
+  });
+
+  // Lines from core to each table center
+  const coreLines = useMemo(() => {
+    return TABLES.map((t) => {
+      const geo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 1, 0),
+        new THREE.Vector3(...t.position),
+      ]);
+      const mat = new THREE.LineBasicMaterial({
+        color: t.color,
+        transparent: true,
+        opacity: 0.35,
+      });
+      return new THREE.Line(geo, mat);
+    });
+  }, []);
+
+  return (
+    <group position={[0, 1, 0]}>
+      {/* Outer glow */}
+      <mesh>
+        <sphereGeometry args={[3, 32, 32]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0.03} />
+      </mesh>
+      <mesh>
+        <sphereGeometry args={[2, 32, 32]} />
+        <meshBasicMaterial color="#fde68a" transparent opacity={0.06} />
+      </mesh>
+      {/* Core sphere */}
+      <mesh ref={coreRef}>
+        <sphereGeometry args={[1, 48, 48]} />
+        <meshStandardMaterial
+          color="#fef3c7"
+          emissive="#f59e0b"
+          emissiveIntensity={1.5}
+          roughness={0.1}
+          metalness={0.8}
+          transparent
+          opacity={0.9}
+        />
+      </mesh>
+      {/* Inner bright core */}
+      <mesh>
+        <sphereGeometry args={[0.5, 32, 32]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0.6} />
+      </mesh>
+      {/* Rotating rings */}
+      <mesh ref={ringRef1}>
+        <torusGeometry args={[1.6, 0.02, 16, 64]} />
+        <meshBasicMaterial color="#fbbf24" transparent opacity={0.5} />
+      </mesh>
+      <mesh ref={ringRef2}>
+        <torusGeometry args={[2.0, 0.015, 16, 64]} />
+        <meshBasicMaterial color="#60a5fa" transparent opacity={0.35} />
+      </mesh>
+      <mesh ref={ringRef3}>
+        <torusGeometry args={[2.4, 0.012, 16, 64]} />
+        <meshBasicMaterial color="#c084fc" transparent opacity={0.3} />
+      </mesh>
+      {/* Label */}
+      <Html center distanceFactor={18} style={{ pointerEvents: "none" }}>
+        <div style={{
+          color: "#fef3c7",
+          textAlign: "center",
+          fontFamily: "'Inter', system-ui, sans-serif",
+          textShadow: "0 0 20px #f59e0b, 0 0 40px #f59e0b, 0 0 60px #f59e0b",
+          whiteSpace: "nowrap",
+        }}>
+          <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: 3, textTransform: "uppercase" }}>Neural</div>
+          <div style={{ fontSize: 20, fontWeight: 900 }}>Core</div>
+        </div>
+      </Html>
+      {/* Connection lines to all tables */}
+      {coreLines.map((line, i) => (
+        <primitive key={i} object={line} position={[0, -1, 0]} />
+      ))}
+    </group>
+  );
+}
+
 function Scene() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -393,10 +489,12 @@ function Scene() {
       <pointLight position={[8, -6, 5]} intensity={0.4} color="#22c55e" />
       <pointLight position={[0, 8, -5]} intensity={0.3} color="#f59e0b" />
       <pointLight position={[0, -8, 3]} intensity={0.3} color="#9333ea" />
+      <pointLight position={[0, 1, 0]} intensity={1} color="#fbbf24" distance={20} decay={2} />
 
       <Stars radius={60} depth={60} count={3000} factor={3} saturation={0.3} fade speed={0.3} />
       <GridPlane />
 
+      <NeuralCore />
       <FKConnections tables={TABLES} />
       <FlowParticles tables={TABLES} />
 
