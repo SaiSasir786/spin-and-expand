@@ -292,29 +292,23 @@ function FKConnections({ tables }: { tables: TableNode[] }) {
 }
 
 function FKLine({ from, to }: { from: THREE.Vector3; to: THREE.Vector3 }) {
-  const ref = useRef<THREE.Line>(null);
-  
-  const geo = useMemo(() => {
-    // Create a curved line via quadratic bezier
+  const lineObj = useMemo(() => {
     const mid = new THREE.Vector3().addVectors(from, to).multiplyScalar(0.5);
     mid.y += 1.5;
     mid.z += 1;
     const curve = new THREE.QuadraticBezierCurve3(from, mid, to);
     const points = curve.getPoints(32);
-    return new THREE.BufferGeometry().setFromPoints(points);
+    const geo = new THREE.BufferGeometry().setFromPoints(points);
+    const mat = new THREE.LineBasicMaterial({ color: "#fbbf24", transparent: true, opacity: 0.2 });
+    return new THREE.Line(geo, mat);
   }, [from, to]);
 
   useFrame((state) => {
-    if (!ref.current) return;
-    const mat = ref.current.material as THREE.LineBasicMaterial;
+    const mat = lineObj.material as THREE.LineBasicMaterial;
     mat.opacity = 0.15 + Math.sin(state.clock.elapsedTime * 2) * 0.08;
   });
 
-  return (
-    <line ref={ref} geometry={geo}>
-      <lineBasicMaterial color="#fbbf24" transparent opacity={0.2} />
-    </line>
-  );
+  return <primitive object={lineObj} />;
 }
 
 // Animated particles flowing along FK connections
